@@ -160,5 +160,5 @@ Now, we just need to run Airflow in Docker. However, we need to create some envi
 
 - Finally, create the network with ``docker network create airflow`` and start Airflow in Docker by running ``docker-compose up -d``.
 
-Now you can access the Airflow UI at ``localhost:8080``. Use the username ``airflow`` and the password ``airflow`` to log in, and you can activate the DAG now. You can check the log of each task to see what is going on.
+Now you can access the Airflow UI at ``localhost:8080``. Use the username ``airflow`` and the password ``airflow`` to log in, and you can activate the DAG ``job_scraper`` now. You can check the log of each task to see what is going on.
 
