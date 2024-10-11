@@ -163,4 +163,54 @@ Now, we just need to run Airflow in Docker. However, we need to create some envi
 Now you can access the Airflow UI at ``localhost:8080``. Use the username ``airflow`` and the password ``airflow`` to log in, and you can activate the DAG ``job_scraper`` now. You can check the log of each task to see what is going on.
 
 ### **```SQL Query```**
-- I will update later
+- Once all the data is loaded into the database, we need to perform some cleaning.
+** ** 
+        UPDATE jobs_table
+        SET salary = NULL
+        WHERE salary = 'Thỏa thuận';
+
+        ALTER TABLE jobs_table
+        ALTER COLUMN salary TYPE numeric USING salary::numeric;
+
+        UPDATE jobs_table
+        SET salary = ROUND(salary);
+
+- We need to create a stored procedure with the purpose of updating the remaining time for jobs that are still open for applications.
+** ** 
+        CREATE OR REPLACE PROCEDURE update_deadline()
+        LANGUAGE plpgsql
+        AS $$
+        DECALRE
+            job_record RECORD,
+            time_remaining INTERVAL;
+        BEGIN
+            FOR job_record IN SELECT * FROM jobs_table LOOP
+                time_remaining = jobs_table.deadline_date - CURRENT_TIMESTAMP;
+                
+                IF time_remaining > INTERVAL '0 seconds' THEN 
+                    IF time_remaining < INTERVAL '1 minutes' THEN
+                        UPDATE jobs_table
+                        SET deadline = 'Còn ' || EXTRACT(SECOND FROM time_remaining) || ' giây để ứng tuyển'
+                        WHERE link = job_record.link;
+                    ELSEIF time_remaining < INTERVAL '1 hour' THEN
+                        UPDATE jobs_table
+                        SET deadline = 'Còn ' || EXTRACT(MINUTE FROM time_remaining) || ' phút để ứng tuyển'
+                        WHERE link = job_record.link;
+                    ELSEIF time_remaining < INTERVAL '1 day' THEN 
+                        UPDATE jobs_table
+                        SET deadline = 'Còn ' || EXTRACT(HOUR FROM time_remaining) || ' giờ để ứng tuyển'
+                        WHERE link = job_record.link;
+                    ELSE
+                        UPDATE jobs_table
+                        SET deadline = 'Còn ' || EXTRACT(DAY FROM time_remaining) || ' ngày để ứng tuyển'
+                        WHERE link = job_record.link;
+                    END IF;
+                
+                ELSE
+                    UPDATE jobs_table
+                    SET deadline = 'Đã hết thời gian ứng tuyển'
+                    WHERE link = job_record.link;
+                END IF;
+            END LOOP;
+        END;
+        $$;
