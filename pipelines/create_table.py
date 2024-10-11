@@ -58,7 +58,7 @@ def create_table():
             update_date TIMESTAMP WITH TIME ZONE,
             location VARCHAR(30),
             deadline TEXT,
-            deadline_date TIMESTAMP WITH TIME ZONE
+            due_date TIMESTAMP WITH TIME ZONE
         )
     '''
 
@@ -71,7 +71,7 @@ def create_table():
             update TIMESTAMP WITH TIME ZONE,
             location VARCHAR(30),
             deadline TEXT,
-            deadline_date TIMESTAMP WITH TIME ZONE
+            due_date TIMESTAMP WITH TIME ZONE
         )
     '''
 
