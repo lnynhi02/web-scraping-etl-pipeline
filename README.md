@@ -214,3 +214,5 @@ Now you can access the Airflow UI at ``localhost:8080``. Use the username ``airf
             END LOOP;
         END;
         $$;
+
+Thank you very much for following along with me. If you have any questions, feel free to inbox me. I hope you enjoy working on the project. Thank you!
