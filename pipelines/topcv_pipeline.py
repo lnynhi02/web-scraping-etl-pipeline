@@ -72,7 +72,7 @@ def scrape_data(**kwargs):
                 location = job.query_selector("label.address").inner_text().strip()
                 deadline = job.query_selector("label.time").inner_text().strip()
 
-                update_date, deadline_date = caculate_dates(update, deadline)
+                update_date, due_date = caculate_dates(update, deadline)
                 scraped_jobs.append({
                     'title': title,
                     'link': link,
@@ -82,7 +82,7 @@ def scrape_data(**kwargs):
                     'update_date': update_date,
                     'location': location,
                     'deadline': deadline,
-                    'deadline_date': deadline_date
+                    'due_date': due_date
                 })
             
             browser.close()
@@ -135,7 +135,7 @@ def clean_data(**kwargs):
             'update': pendulum.instance(job['update_date']).in_timezone('Asia/Ho_Chi_Minh'),
             'location': job['location'],
             'deadline': job['deadline'],
-            'deadline_date': pendulum.instance(job['deadline_date']).in_timezone('Asia/Ho_Chi_Minh')
+            'due_date': pendulum.instance(job['due_date']).in_timezone('Asia/Ho_Chi_Minh')
         })
 
         logging.info(f"Job '{job['title']}' has update time: {job['update_date']}")
@@ -161,7 +161,7 @@ def transform_data(**kwargs):
             'update': pendulum.instance(job['update']).in_timezone('Asia/Ho_Chi_Minh'),
             'location': job['location'],
             'deadline': job['deadline'],
-            'deadline_date': pendulum.instance(job['deadline_date']).in_timezone('Asia/Ho_Chi_Minh')
+            'due_date': pendulum.instance(job['due_date']).in_timezone('Asia/Ho_Chi_Minh')
         })
 
     logging.info(f"Transformed {len(transformed_jobs)} job(s)")
@@ -188,7 +188,7 @@ def write_sql_query(**kwargs):
                         f"'{job['update']}', "
                         f"'{job['location']}', "
                         f"'{job['deadline']}', "
-                        f"'{job['deadline_date']}');\n"
+                        f"'{job['due_date']}');\n"
                     )
                     if job['update'] > last_processed:
                         last_processed = job['update']
