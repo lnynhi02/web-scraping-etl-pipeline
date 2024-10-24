@@ -199,27 +199,19 @@ Now, we just need to run Airflow in Docker. However, we need to create some envi
 
 - Navigate to the **Admin** section at the top and select **Connections**. Then, click on the **+** icon to add a new connection.
 <p align="center">
-  <img width=80% height=80%" src="assets/4.png">
+  <img width=80% height=80%" src="assets/5.png">
 
 - Since we are connecting from Airflow running in a Docker container, set the host to **host.docker.internal**. Ensure you also enter your **database** name and **password** accordingly. The **Connection ID** will later be utilized in the **postgres_conn_id** parameter within the `write_to_postgres_task`
 <p align="center">
-  <img width=80% height=80%" src="assets/5.png">
-
-** **
-    write_to_postgres_task = PostgresOperator(
-        task_id='write_to_postgres_task',
-        postgres_conn_id='postgres_conn',
-        sql='postgres_query.sql',
-        trigger_rule='all_success'
-    )
+  <img width=80% height=80%" src="assets/6.png">
 
 - Let's go and run the DAG.
 <p align="center">
-  <img width=80% height=80%" src="assets/3.png">
+  <img width=80% height=80%" src="assets/4.png">
 
 - You can monitor the log for each task to gain insights into the scraping process and see how many jobs have been collected. 
 <p align="center">
-  <img width=80% height=80%" src="assets/6.png">
+  <img width=80% height=80%" src="assets/7.png">
 
 <p align="center">
   <img width=80% height=80%" src="assets/8.png">
