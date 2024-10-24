@@ -74,69 +74,69 @@ I use `config.ini` to access the database configurations, allowing you to modify
 ### **```Airflow Setup```**
 Let’s take a look at the Directed Acyclic Graph (DAG) that will outline the sequence and dependencies of tasks, enabling Airflow to manage their execution.
 ** ** 
-        from airflow.providers.postgres.operators.postgres import PostgresOperator
-        from airflow.operators.python import PythonOperator
-        from airflow import DAG
-        import airflow.utils.dates
-        import logging
-        import sys
-        import os
+    from airflow.providers.postgres.operators.postgres import PostgresOperator
+    from airflow.operators.python import PythonOperator
+    from airflow import DAG
+    import airflow.utils.dates
+    import logging
+    import sys
+    import os
 
-        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'pipelines'))
-        from topcv_pipeline import scrape_data, clean_data, transform_data, write_sql_query, check_sql_file
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'pipelines'))
+    from topcv_pipeline import scrape_data, clean_data, transform_data, write_sql_query, check_sql_file
 
-        logging.basicConfig(level=logging.INFO)
-        TEMPLATE_SEARCH_PATH = os.path.join(os.path.dirname(__file__), '..', 'tmp')
+    logging.basicConfig(level=logging.INFO)
+    TEMPLATE_SEARCH_PATH = os.path.join(os.path.dirname(__file__), '..', 'tmp')
 
-        default_args = {
-            'owner': 'airflow',
-            'start_date': airflow.utils.dates.days_ago(1)
-        }
+    default_args = {
+        'owner': 'airflow',
+        'start_date': airflow.utils.dates.days_ago(1)
+    }
 
-        with DAG(
-            'job_scraper',
-            default_args=default_args,
-            template_searchpath=TEMPLATE_SEARCH_PATH,
-            schedule_interval='@daily',
-            catchup=False
-        ) as dag:
-            scrape_data_task = PythonOperator(
-                task_id='scrape_data_task',
-                python_callable=scrape_data,
-                provide_context=True,
-                op_kwargs={'url': 'https://www.topcv.vn/viec-lam-it'},
-            )
+    with DAG(
+        'job_scraper',
+        default_args=default_args,
+        template_searchpath=TEMPLATE_SEARCH_PATH,
+        schedule_interval='@daily',
+        catchup=False
+    ) as dag:
+        scrape_data_task = PythonOperator(
+            task_id='scrape_data_task',
+            python_callable=scrape_data,
+            provide_context=True,
+            op_kwargs={'url': 'https://www.topcv.vn/viec-lam-it'},
+        )
 
-            clean_data_task = PythonOperator(
-                task_id='clean_data_task',
-                python_callable=clean_data,
-                provide_context=True
-            )
+        clean_data_task = PythonOperator(
+            task_id='clean_data_task',
+            python_callable=clean_data,
+            provide_context=True
+        )
 
-            transform_data_task = PythonOperator(
-                task_id='transform_data_task',
-                python_callable=transform_data,
-                provide_context=True
-            )
+        transform_data_task = PythonOperator(
+            task_id='transform_data_task',
+            python_callable=transform_data,
+            provide_context=True
+        )
 
-            write_sql_query_task = PythonOperator(
-                task_id='write_sql_query_task',
-                python_callable=write_sql_query,
-                provide_context=True
-            )
+        write_sql_query_task = PythonOperator(
+            task_id='write_sql_query_task',
+            python_callable=write_sql_query,
+            provide_context=True
+        )
 
-            check_sql_file_task = PythonOperator(
-                task_id='check_sql_file_task',
-                python_callable=check_sql_file,
-                provide_context=True
-            )
+        check_sql_file_task = PythonOperator(
+            task_id='check_sql_file_task',
+            python_callable=check_sql_file,
+            provide_context=True
+        )
 
-            write_to_postgres_task = PostgresOperator(
-                task_id='write_to_postgres_task',
-                postgres_conn_id='postgres_conn',
-                sql='postgres_query.sql',
-                trigger_rule='all_success'
-            )
+        write_to_postgres_task = PostgresOperator(
+            task_id='write_to_postgres_task',
+            postgres_conn_id='postgres_conn',
+            sql='postgres_query.sql',
+            trigger_rule='all_success'
+        )
 
     scrape_data_task >> clean_data_task >> transform_data_task >> write_sql_query_task >> check_sql_file_task >> write_to_postgres_task
 
@@ -152,11 +152,11 @@ Let’s take a look at the Directed Acyclic Graph (DAG) that will outline the se
 Now, we just need to run Airflow in Docker. However, we need to create some environment variables that will be used by docker-compose.
 - Linux:
 ** **
-        echo -e "AIRFLOW_UID=$(id -u)" > .env
+    echo -e "AIRFLOW_UID=$(id -u)" > .env
 
 - Windows, you need to find the UID by the command ``whoami /user``. Next, you take the 4 numbers at the end and run the following command:
 ** ** 
-        Set-Content -Path .env -Value "AIRFLOW_UID=xxxx"
+    Set-Content -Path .env -Value "AIRFLOW_UID=xxxx"
 
 - Finally, create the network with ``docker network create airflow`` and start Airflow in Docker by running ``docker-compose up -d``.
 
@@ -165,54 +165,54 @@ Now you can access the Airflow UI at ``localhost:8080``. Use the username ``airf
 ### **```SQL Query```**
 - Once all the data is loaded into the database, we need to perform some cleaning.
 ** ** 
-        UPDATE jobs_table
-        SET salary = NULL
-        WHERE salary = 'Thỏa thuận';
+    UPDATE jobs_table
+    SET salary = NULL
+    WHERE salary = 'Thỏa thuận';
 
-        ALTER TABLE jobs_table
-        ALTER COLUMN salary TYPE numeric USING salary::numeric;
+    ALTER TABLE jobs_table
+    ALTER COLUMN salary TYPE numeric USING salary::numeric;
 
-        UPDATE jobs_table
-        SET salary = ROUND(salary);
+    ALTER TABLE jobs_table
+    ALTER COLUMN salary TYPE integer USING ROUND(salary);
 
 - We need to create a stored procedure with the purpose of updating the remaining time for jobs that are still open for applications.
 ** ** 
-        CREATE OR REPLACE PROCEDURE update_deadline()
-        LANGUAGE plpgsql
-        AS $$
-        DECALRE
-            job_record RECORD,
-            time_remaining INTERVAL;
-        BEGIN
-            FOR job_record IN SELECT * FROM jobs_table LOOP
-                time_remaining = jobs_table.deadline_date - CURRENT_TIMESTAMP;
-                
-                IF time_remaining > INTERVAL '0 seconds' THEN 
-                    IF time_remaining < INTERVAL '1 minutes' THEN
-                        UPDATE jobs_table
-                        SET deadline = 'Còn ' || EXTRACT(SECOND FROM time_remaining) || ' giây để ứng tuyển'
-                        WHERE link = job_record.link;
-                    ELSEIF time_remaining < INTERVAL '1 hour' THEN
-                        UPDATE jobs_table
-                        SET deadline = 'Còn ' || EXTRACT(MINUTE FROM time_remaining) || ' phút để ứng tuyển'
-                        WHERE link = job_record.link;
-                    ELSEIF time_remaining < INTERVAL '1 day' THEN 
-                        UPDATE jobs_table
-                        SET deadline = 'Còn ' || EXTRACT(HOUR FROM time_remaining) || ' giờ để ứng tuyển'
-                        WHERE link = job_record.link;
-                    ELSE
-                        UPDATE jobs_table
-                        SET deadline = 'Còn ' || EXTRACT(DAY FROM time_remaining) || ' ngày để ứng tuyển'
-                        WHERE link = job_record.link;
-                    END IF;
-                
+    CREATE OR REPLACE PROCEDURE update_deadline()
+    LANGUAGE plpgsql
+    AS $$
+    DECALRE
+        job_record RECORD,
+        time_remaining INTERVAL;
+    BEGIN
+        FOR job_record IN SELECT * FROM jobs_table LOOP
+            time_remaining = jobs_table.deadline_date - CURRENT_TIMESTAMP;
+            
+            IF time_remaining > INTERVAL '0 seconds' THEN 
+                IF time_remaining < INTERVAL '1 minutes' THEN
+                    UPDATE jobs_table
+                    SET deadline = 'Còn ' || EXTRACT(SECOND FROM time_remaining) || ' giây để ứng tuyển'
+                    WHERE link = job_record.link;
+                ELSEIF time_remaining < INTERVAL '1 hour' THEN
+                    UPDATE jobs_table
+                    SET deadline = 'Còn ' || EXTRACT(MINUTE FROM time_remaining) || ' phút để ứng tuyển'
+                    WHERE link = job_record.link;
+                ELSEIF time_remaining < INTERVAL '1 day' THEN 
+                    UPDATE jobs_table
+                    SET deadline = 'Còn ' || EXTRACT(HOUR FROM time_remaining) || ' giờ để ứng tuyển'
+                    WHERE link = job_record.link;
                 ELSE
                     UPDATE jobs_table
-                    SET deadline = 'Đã hết thời gian ứng tuyển'
+                    SET deadline = 'Còn ' || EXTRACT(DAY FROM time_remaining) || ' ngày để ứng tuyển'
                     WHERE link = job_record.link;
                 END IF;
-            END LOOP;
-        END;
-        $$;
+            
+            ELSE
+                UPDATE jobs_table
+                SET deadline = 'Đã hết thời gian ứng tuyển'
+                WHERE link = job_record.link;
+            END IF;
+        END LOOP;
+    END;
+    $$;
 
 Thank you very much for following along with me. If you have any questions, feel free to inbox me. I hope you enjoy working on the project. Thank you!

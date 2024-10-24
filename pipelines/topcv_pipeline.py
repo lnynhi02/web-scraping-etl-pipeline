@@ -102,7 +102,7 @@ def write_to_staging_table(scraped_jobs):
     try:
         for job in scraped_jobs:
             cur.execute("""INSERT INTO staging_table VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""", 
-            (job['title'], job['link'], job['salary'], job['company'], job['update'], job['update_date'], job['location'], job['deadline'], job['deadline_date']))
+            (job['title'], job['link'], job['salary'], job['company'], job['update'], job['update_date'], job['location'], job['deadline'], job['due_date']))
     except Exception as e:
         logging.error(f"Error writing data to staging table: {e}")
     finally:
