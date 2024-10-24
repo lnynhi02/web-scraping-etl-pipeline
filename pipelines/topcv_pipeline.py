@@ -96,6 +96,7 @@ def scrape_data(**kwargs):
         display.stop()
 
 def write_to_staging_table(scraped_jobs):
+    # Write to Staging Table: Keeping a copy of the original data for recovery purposes
     conn = get_connection()
     cur = conn.cursor(cursor_factory=DictCursor)
 
@@ -114,6 +115,7 @@ def clean_data(**kwargs):
     conn = get_connection()
     cur = conn.cursor(cursor_factory=DictCursor)
 
+    # Filter New Jobs: Select only jobs with update_date greater than last_processed_time
     query = "SELECT * FROM staging_table"
     last_processed_time = read_last_processed_time()
 
@@ -123,10 +125,10 @@ def clean_data(**kwargs):
     elif last_processed_time is None:
         cur.execute(query)
 
+    # Using Pendulum for timezone management before pushing to XCom
     scraped_jobs = cur.fetchall()
     cleaned_jobs = []
-    for job in scraped_jobs:
-        
+    for job in scraped_jobs:        
         cleaned_jobs.append({
             'title': clean_title(job['title']),
             'link': job['link'],
