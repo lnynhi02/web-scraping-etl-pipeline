@@ -283,22 +283,8 @@ Now, we just need to run Airflow in Docker. However, we need to create some envi
 - To gain better insights into the data, let's execute some queries.
 
 ## 📝 Technical Notes
+- **Write to Staging Table:** In the `write_to_staging_table` function, data is written to a staging table to preserve the original dataset before any cleaning processes are applied. This allows for data recovery if needed and ensures that no data is lost during processing.
 ** **
-    def read_last_processed_time():
-        try:
-            with open(LAST_PROCESSED_FILE, "r") as file:
-                return datetime.fromisoformat(json.load(file)['last_processed'])
-        except Exception as e:
-            logging.error(f"Error reading last processed time from file: {e} -> So we will return None")
-            return None
-
-    def write_last_processed_time(last_processed):
-        try:
-            with open(LAST_PROCESSED_FILE, "w") as file:
-                json.dump({'last_processed': last_processed.isoformat()}, file)
-        except Exception as e:
-            logging.error(f"Error writing last processed time to file: {e}")
-
     def get_connection():
         config_file = os.path.join(os.path.dirname(__file__), '..', 'config.ini')
         config = configparser.ConfigParser()
@@ -377,6 +363,14 @@ Now, we just need to run Airflow in Docker. However, we need to create some envi
             cur.close()
             conn.close()
 
+- **Usage of DictCursor:** In the `clean_data` function, we utilize `DictCursor` to access table columns as **key-value pairs**. Using `DictCursor` enables direct access to values, for example by calling `job['title']`, which enhances code readability and maintainability.
+
+- **Filtering New Jobs:** When querying data in the `clean_data` function, only jobs with an update_date greater than last_processed_time are selected. This ensures that only new jobs are retrieved, avoiding the reprocessing of existing jobs.
+
+- **Pendulum for Timezone Management:** The pendulum library is used before pushing data to XCom in each task to ensure that timestamps are correctly converted to the **'Asia/Ho_Chi_Minh'** timezone. This is crucial because Airflow automatically converts timestamps to UTC, which can lead to discrepancies if not managed carefully. Please change the timezone to your preferred timezone as needed.
+
+- **Data Flow Using XCom:** The DAG utilizes Airflow's XCom feature to pass data between tasks. The `clean_data` task pushes cleaned job data into XCom, which is subsequently pulled by the `transform_data` task for further processing. Finally, the `write_sql_query` task retrieves the transformed data to generate SQL insert commands.
+** ** 
     def clean_data(**kwargs):
         conn = get_connection()
         cur = conn.cursor(cursor_factory=DictCursor)
@@ -435,6 +429,8 @@ Now, we just need to run Airflow in Docker. However, we need to create some envi
 
         kwargs['ti'].xcom_push(key='transformed_data', value=transformed_jobs)
 
+- **Error Handling:** The `check_sql_file` task verifies whether the `postgres_query.sql` file contains any `INSERT` commands. If `INSERT` commands are present, it proceeds to execute the downstream tasks. Conversely, if no commands are found, it raises an `AirflowSkipException`, causing both the current task and its downstream tasks to be skipped.
+** **
     def write_sql_query(**kwargs):
         transformed_jobs = kwargs['ti'].xcom_pull(key='transformed_data', task_ids='transform_data_task')
         postgres_sql_file = os.path.join(os.path.dirname(__file__), '..', 'tmp', 'postgres_query.sql')
@@ -474,15 +470,3 @@ Now, we just need to run Airflow in Docker. However, we need to create some envi
         else:
             logging.info("No SQL queries to execute.")
             raise AirflowSkipException("Skipping task because SQL file is empty")
-
-- **Write to Staging Table:** In the `write_to_staging_table` function, data is written to a staging table to preserve the original dataset before any cleaning processes are applied. This allows for data recovery if needed and ensures that no data is lost during processing.
-
-- **Usage of DictCursor:** In the `clean_data` function, we utilize `DictCursor` to access table columns as **key-value pairs**. Using `DictCursor` enables direct access to values, for example by calling `job['title']`, which enhances code readability and maintainability.
-
-- **Filtering New Jobs:** When querying data in the `clean_data` function, only jobs with an update_date greater than last_processed_time are selected. This ensures that only new jobs are retrieved, avoiding the reprocessing of existing jobs.
-
-- **Pendulum for Timezone Management:** The pendulum library is used before pushing data to XCom in each task to ensure that timestamps are correctly converted to the **'Asia/Ho_Chi_Minh'** timezone. This is crucial because Airflow automatically converts timestamps to UTC, which can lead to discrepancies if not managed carefully. Please change the timezone to your preferred timezone as needed.
-
-- **Data Flow Using XCom:** The DAG utilizes Airflow's XCom feature to pass data between tasks. The `clean_data` task pushes cleaned job data into XCom, which is subsequently pulled by the `transform_data` task for further processing. Finally, the `write_sql_query` task retrieves the transformed data to generate SQL insert commands.
-
-- **Error Handling:** The `check_sql_file` task verifies whether the `postgres_query.sql` file contains any `INSERT` commands. If `INSERT` commands are present, it proceeds to execute the downstream tasks. Conversely, if no commands are found, it raises an `AirflowSkipException`, causing both the current task and its downstream tasks to be skipped.
