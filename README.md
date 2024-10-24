@@ -476,7 +476,7 @@ For further details about its operation, please refer to the [Technical Notes](#
 
 - **Write to Staging Table:** In the `write_to_staging_table` function, data is written to a staging table to preserve the original dataset before any cleaning processes are applied. This allows for data recovery if needed and ensures that no data is lost during processing.
 
-- **Usage of DictCursor:** In the `clean_data` function, we utilize `DictCursor` to access table columns as **key-value pairs**. Using `DictCursor` enables direct access to values for example by calling `job['title']`, which enhances code readability and maintainability.
+- **Usage of DictCursor:** In the `clean_data` function, we utilize `DictCursor` to access table columns as **key-value pairs**. Using `DictCursor` enables direct access to values, for example by calling `job['title']`, which enhances code readability and maintainability.
 
 - **Filtering New Jobs:** When querying data in the clean_data function, only jobs with an update_date greater than last_processed_time are selected. This ensures that only new jobs are retrieved, avoiding the reprocessing of existing jobs.
 
@@ -485,4 +485,3 @@ For further details about its operation, please refer to the [Technical Notes](#
 - **Data Flow Using XCom:** The DAG utilizes Airflow's XCom feature to pass data between tasks. The `clean_data` task pushes cleaned job data into XCom, which is subsequently pulled by the `transform_data` task for further processing. Finally, the `write_sql_query` task retrieves the transformed data to generate SQL insert commands.
 
 - **Error Handling:** The `check_sql_file` task verifies whether the `postgres_query.sql` file contains any `INSERT` commands. If `INSERT` commands are present, it proceeds to execute the downstream tasks. Conversely, if no commands are found, it raises an `AirflowSkipException`, causing both the current task and its downstream tasks to be skipped.
-
