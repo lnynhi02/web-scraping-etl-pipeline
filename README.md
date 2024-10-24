@@ -23,6 +23,7 @@ Let's break down the ETL process step-by-step:
 * [💻 Deployment](#-deployment)
     - [Postgres Setup](#postgres-setup)
     - [Airflow Setup](#airflow-setup)
+    - [SQL Query](#sql-query)
 * [📝 Technical Notes](#-technical-notes)
 
 ## ⚙️ Local Setup
