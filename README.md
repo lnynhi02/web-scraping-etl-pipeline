@@ -470,3 +470,17 @@ Now, we just need to run Airflow in Docker. However, we need to create some envi
         else:
             logging.info("No SQL queries to execute.")
             raise AirflowSkipException("Skipping task because SQL file is empty")
+
+** **
+    check_sql_file_task = PythonOperator(
+        task_id='check_sql_file_task',
+        python_callable=check_sql_file,
+        provide_context=True
+    )
+
+    write_to_postgres_task = PostgresOperator(
+        task_id='write_to_postgres_task',
+        postgres_conn_id='postgres_conn',
+        sql='postgres_query.sql',
+        trigger_rule='all_success'
+    )
