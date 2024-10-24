@@ -222,7 +222,7 @@ Now, we just need to run Airflow in Docker. However, we need to create some envi
   <img width=80% height=80%" src="assets/7.png">
 
 <p align="center">
-  <img width=80% height=80%" src="assets/8.png">
+  <img width=80% height=80%" src="assets/10.png">
 
 > [!NOTE]
 > For further details about its operation, please refer to the [Technical Notes](#-technical-notes).
