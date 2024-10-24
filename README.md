@@ -18,6 +18,13 @@ Let's break down the ETL process step-by-step:
 - Create a 'deadline_date' column to facilitate easy tracking of job deadlines.
 - Utilize a stored procedure to update the 'deadline' column daily, for example, changing 'Còn 24 ngày để ứng tuyển' to 'Còn 23 ngày để ứng tuyển' the following day.
 
+## 📕  Table Of Contents
+* [⚙️ Local Setup](#️-local-setup)
+* [💻 Deployment](#-deployment)
+    - [Postgres Setup](#postgres-setup)
+    - [Airflow Setup](#airflow-setup)
+* [📝 Technical Notes](#-technical-notes)
+
 ## ⚙️ Local Setup
 ### Prerequisites
 - Install [Docker](https://www.docker.com/products/docker-desktop/) for running Airflow
