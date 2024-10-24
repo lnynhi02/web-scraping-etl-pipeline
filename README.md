@@ -280,7 +280,7 @@ For further details about its operation, please refer to the [Technical Notes](#
 
 - To gain better insights into the data, let's execute some queries.
 
-### **```Technical Notes```**
+## **```Technical Notes```**
 ** **
     def read_last_processed_time():
         try:
