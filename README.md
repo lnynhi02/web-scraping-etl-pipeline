@@ -224,7 +224,7 @@ Now, we just need to run Airflow in Docker. However, we need to create some envi
 <p align="center">
   <img width=80% height=80%" src="assets/8.png">
 
-For further details about its operation, please refer to the [Technical Notes](#technical-notes).
+For further details about its operation, please refer to the [Technical Notes](#-technical-notes).
 
 ### **```SQL Query```**
 - Once all the data is loaded into the database, we need to perform some cleaning. The `salary` column some text like **Thỏa thuận** which means **contract**, we will set it to ***NULL*** and change the data type for improved querying.
