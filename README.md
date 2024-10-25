@@ -10,7 +10,7 @@ Let's break down the ETL process step-by-step:
 3. **Scheduling with Airflow**: All tasks—ranging from data scraping and cleaning to transformation and storage in the PostgreSQL database—are seamlessly orchestrated using Airflow, ensuring efficient workflow management.
 
 <p align="center">
-    <img width=80% height=80% src="assets/pipeline.gif" />
+    <img width=90% height=90% src="assets/pipeline.gif" />
 
 ## Achievements
 - Stored new jobs daily in the PostgreSQL database to keep an updated repository.
@@ -84,7 +84,7 @@ Before setting-up our airflow configurations, let’s create the Postgres databa
 
 When installing postgres, you need to setup a password that we will need later to connect to the database from the Spark environment. **You must remember the password to reconnect to the database servers**. You can also leave the port at 5432. If your installation has succeeded, you can start pgadmin and you should observe something like this window:
 <p align="center">
-  <img width=80% height=80%" src="https://www.w3schools.com/postgresql/screenshot_postgresql_pgadmin4_4.png">
+  <img width=90% height=90%" src="https://www.w3schools.com/postgresql/screenshot_postgresql_pgadmin4_4.png">
 
 Since we have many columns for the table we want to create, we opted to use a script with **psycopg2**, a PostgreSQL database adapter for Python, to create the table and add its columns. And we have installed the **psycopg2-binary** package in the `requirements.txt`
 
@@ -198,32 +198,32 @@ Now, we just need to run Airflow in Docker. However, we need to create some envi
 
 - Now we can access the Airflow UI at ``localhost:8080``. Use the username ``airflow`` and the password ``airflow`` to log in.
 <p align="center">
-  <img width=80% height=80%" src="assets/1.png">
+  <img width=90% height=90%" src="assets/1.png">
 
 - We can see the dag `job_scraper`. 
 <p align="center">
-  <img width=80% height=80%" src="assets/2.png">
+  <img width=90% height=90%" src="assets/2.png">
 
 - Before running the DAG, we need to establish a ***Postgres Connection*** in Airflow to enable connectivity with the Postgres database. This connection is essential for executing the `write_to_postgres_task` using the `PostgresOperator`.
 
 - Navigate to the **Admin** section at the top and select **Connections**. Then, click on the **+** icon to add a new connection.
 <p align="center">
-  <img width=80% height=80%" src="assets/4.png">
+  <img width=90% height=90%" src="assets/4.png">
 
 - Since we are connecting from Airflow running in a Docker container, set the host to **host.docker.internal**. Ensure you also enter your **database** name and **password** accordingly. The **Connection ID** will later be utilized in the **postgres_conn_id** parameter within the `write_to_postgres_task`
 <p align="center">
-  <img width=80% height=80%" src="assets/5.png">
+  <img width=90% height=90%" src="assets/5.png">
 
 - Let's go and run the DAG.
 <p align="center">
-  <img width=80% height=80%" src="assets/3.png">
+  <img width=90% height=90%" src="assets/3.png">
 
 - You can monitor the log for each task to gain insights into the scraping process and see how many jobs have been collected. 
 <p align="center">
-  <img width=80% height=80%" src="assets/6.png">
+  <img width=90% height=90%" src="assets/6.png">
 
 <p align="center">
-  <img width=80% height=80%" src="assets/7.png">
+  <img width=90% height=90%" src="assets/7.png">
 
 > [!NOTE]
 > For further details about its operation, please refer to the [Technical Notes](#-technical-notes).
@@ -316,8 +316,8 @@ LIMIT 10;
 ## 📝 Technical Notes
 - **Error Handling:** The `check_sql_file` task verifies whether the `postgres_query.sql` file contains any `INSERT` commands. If `INSERT` commands are present, it proceeds to execute the downstream tasks. Conversely, if no commands are found, it raises an `AirflowSkipException`, causing both the current task and its downstream tasks to be skipped.
 <p align="center">
-  <img width=80% height=80%" src="assets/7.png">
-  
+  <img width=90% height=90%" src="assets/7.png">
+
 ```python
 def write_sql_query(**kwargs):
     transformed_jobs = kwargs['ti'].xcom_pull(key='transformed_data', task_ids='transform_data_task')
