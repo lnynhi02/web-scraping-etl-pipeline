@@ -15,7 +15,7 @@ Let's break down the ETL process step-by-step:
 ## Achievements
 - Stored new jobs daily in the PostgreSQL database to keep an updated repository.
 - Clean the 'title' and 'salary' columns to enhance query performance and ensure accurate data retrieval.
-- Create a 'deadline_date' column to facilitate easy tracking of job deadlines.
+- Create a 'due_date' column to facilitate easy tracking of job deadlines.
 - Utilize a stored procedure to update the 'deadline' column daily, for example, changing 'Còn 24 ngày để ứng tuyển' to 'Còn 23 ngày để ứng tuyển' the following day.
 
 ## 📕  Table Of Contents
