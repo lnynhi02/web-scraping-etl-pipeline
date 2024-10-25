@@ -374,7 +374,7 @@ write_to_postgres_task = PostgresOperator(
 )
 ```
 
-- **Using Playwright:** Initially, I initially intended to use **BeautifulSoup** and **Requests** for web scraping, but due to website restrictions, I switched to **Playwright** for better automation. I tried running it with **headless=True**, but it did not work as expected, so I set it to **headless=False**, which required installing **pyvirtualdisplay**. This installation is included in the Dockerfile.
+- **Using Playwright:** Initially, I initially intended to use **BeautifulSoup** for web scraping, but due to website restrictions, I switched to **Playwright** for better automation. I tried running it with **headless=True**, but it did not work as expected, so I set it to **headless=False**, which required installing **pyvirtualdisplay**. This installation is included in the Dockerfile.
 
 - **Write to Staging Table:** In the `write_to_staging_table` function, data is written to a staging table to preserve the original dataset before any cleaning processes are applied. This allows for data recovery if needed and ensures that no data is lost during processing.
 
