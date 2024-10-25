@@ -55,7 +55,7 @@ def create_table():
             salary TEXT,
             company_name TEXT,
             update TEXT,
-            update_date TIMESTAMP WITH TIME ZONE,
+            posted_date TIMESTAMP WITH TIME ZONE,
             job_location VARCHAR(30),
             remaining_time TEXT,
             due_date TIMESTAMP WITH TIME ZONE

@@ -377,7 +377,7 @@ write_to_postgres_task = PostgresOperator(
 
 - **Usage of DictCursor:** In the `clean_data` function, we utilize `DictCursor` to access table columns as **key-value pairs**. Using `DictCursor` enables direct access to values, for example by calling `job['title']`, which enhances code readability and maintainability.
 
-- **Filtering New Jobs:** When querying data in the `clean_data` function, only jobs with an update_date greater than last_processed_time are selected. This ensures that only new jobs are retrieved, avoiding the reprocessing of existing jobs.
+- **Filtering New Jobs:** When querying data in the `clean_data` function, only jobs with an `posted_date` greater than `last_processed_time` are selected. This ensures that only new jobs are retrieved, avoiding the reprocessing of existing jobs.
 
 - **Pendulum for Timezone Management:** The *pendulum* library is used before pushing data to XCom in each task to ensure that timestamps are correctly converted to the **'Asia/Ho_Chi_Minh'** timezone. This is crucial because Airflow automatically converts timestamps to UTC, which can lead to discrepancies if not managed carefully. Please change the timezone to your preferred timezone as needed.
 
@@ -391,7 +391,7 @@ def clean_data(**kwargs):
     last_processed_time = read_last_processed_time()
 
     if last_processed_time:
-        query += " WHERE update_date > %s"
+        query += " WHERE posted_date > %s"
         cur.execute(query, (last_processed_time,))
     elif last_processed_time is None:
         cur.execute(query)

@@ -72,14 +72,14 @@ def scrape_data(**kwargs):
                 location = job.query_selector("label.address").inner_text().strip()
                 deadline = job.query_selector("label.time").inner_text().strip()
 
-                update_date, due_date = caculate_dates(update, deadline)
+                posted_date, due_date = caculate_dates(update, deadline)
                 scraped_jobs.append({
                     'job_name': title,
                     'job_link': link,
                     'salary': salary,
                     'company_name': company,
                     'update': update,
-                    'update_date': update_date,
+                    'posted_date': posted_date,
                     'job_location': location,
                     'remaining_time': deadline,
                     'due_date': due_date
