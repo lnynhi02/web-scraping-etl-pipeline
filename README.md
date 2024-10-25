@@ -252,40 +252,68 @@ DECALRE
     time_remaining INTERVAL;
 BEGIN
     FOR job_record IN SELECT * FROM jobs_table LOOP
-        time_remaining = jobs_table.deadline_date - CURRENT_TIMESTAMP;
+        time_remaining = jobs_table.due_date - CURRENT_TIMESTAMP;
         
         IF time_remaining > INTERVAL '0 seconds' THEN 
             IF time_remaining < INTERVAL '1 minutes' THEN
                 UPDATE jobs_table
-                SET deadline = 'Còn ' || EXTRACT(SECOND FROM time_remaining) || ' giây để ứng tuyển'
-                WHERE link = job_record.link;
+                SET remaining_time = 'Còn ' || EXTRACT(SECOND FROM time_remaining) || ' giây để ứng tuyển'
+                WHERE job_link = job_record.job_link;
             ELSEIF time_remaining < INTERVAL '1 hour' THEN
                 UPDATE jobs_table
-                SET deadline = 'Còn ' || EXTRACT(MINUTE FROM time_remaining) || ' phút để ứng tuyển'
-                WHERE link = job_record.link;
+                SET remaining_time = 'Còn ' || EXTRACT(MINUTE FROM time_remaining) || ' phút để ứng tuyển'
+                WHERE job_link = job_record.job_link;
             ELSEIF time_remaining < INTERVAL '1 day' THEN 
                 UPDATE jobs_table
-                SET deadline = 'Còn ' || EXTRACT(HOUR FROM time_remaining) || ' giờ để ứng tuyển'
-                WHERE link = job_record.link;
+                SET remaining_time = 'Còn ' || EXTRACT(HOUR FROM time_remaining) || ' giờ để ứng tuyển'
+                WHERE job_link = job_record.job_link;
             ELSE
                 UPDATE jobs_table
-                SET deadline = 'Còn ' || EXTRACT(DAY FROM time_remaining) || ' ngày để ứng tuyển'
-                WHERE link = job_record.link;
+                SET remaining_time = 'Còn ' || EXTRACT(DAY FROM time_remaining) || ' ngày để ứng tuyển'
+                WHERE job_link = job_record.job_link;
             END IF;
         
         ELSE
             UPDATE jobs_table
-            SET deadline = 'Đã hết thời gian ứng tuyển'
-            WHERE link = job_record.link;
+            SET remaining_time = 'Đã hết thời gian ứng tuyển'
+            WHERE job_link = job_record.job_link;
         END IF;
     END LOOP;
 END;
 $$;
 ```
+
 - To gain better insights into the data, let's execute some queries.
+```sql
+-- Get a list of jobs with application deadline within the next 10 days
+SELECT job_name, job_link, salary, job_location, remaining_time, due_date
+FROM jobs_table
+WHERE due_date <= NOW() + INTERVAL '20 DAYS';
+
+-- Find jobs with salary greater than 15 million VND
+SELECT job_name, job_link, company_name, salary, job_location
+FROM jobs_table
+WHERE salary > 15;
+
+-- Get a list of jobs in order of the most recently posted
+SELECT job_name, company_name, posted_date
+FROM jobs_table
+ORDER BY posted_date DESC;
+
+-- Get the total number of jobs available in Ho Chi Minh City
+SELECT COUNT(*)
+FROM jobs_table
+WHERE job_location LIKE '%Hồ Chí Minh%';
+
+-- Find the top 10 highest-paying jobs in Ho Chi Minh City
+SELECT job_name, job_link, company_name, salary
+FROM jobs_table
+WHERE job_location LIKE '%Hồ Chí Minh%'
+ORDER BY salary DESC
+LIMIT 10;
+```
 
 ## 📝 Technical Notes
-
 - **Error Handling:** The `check_sql_file` task verifies whether the `postgres_query.sql` file contains any `INSERT` commands. If `INSERT` commands are present, it proceeds to execute the downstream tasks. Conversely, if no commands are found, it raises an `AirflowSkipException`, causing both the current task and its downstream tasks to be skipped.
 ```python
 def write_sql_query(**kwargs):
@@ -301,17 +329,17 @@ def write_sql_query(**kwargs):
                 for job in transformed_jobs:
                     file.write(
                         f"INSERT INTO jobs_table VALUES ("
-                        f"'{job['title']}', "
-                        f"'{job['link']}', "
+                        f"'{job['job_name']}', "
+                        f"'{job['job_link']}', "
                         f"'{job['salary']}', "
-                        f"'{job['company']}', "
-                        f"'{job['update']}', "
-                        f"'{job['location']}', "
-                        f"'{job['deadline']}', "
+                        f"'{job['company_name']}', "
+                        f"'{job['posted_date']}', "
+                        f"'{job['job_location']}', "
+                        f"'{job['remaining_time']}', "
                         f"'{job['due_date']}');\n"
                     )
-                    if job['update'] > last_processed:
-                        last_processed = job['update']
+                    if job['posted_date'] > last_processed:
+                        last_processed = job['posted_date']
 
                 logging.info(f"Wrote {len(transformed_jobs)} jobs to the SQL file")
                 write_last_processed_time(last_processed)
@@ -373,17 +401,17 @@ def clean_data(**kwargs):
     for job in scraped_jobs:
         
         cleaned_jobs.append({
-            'title': clean_title(job['title']),
-            'link': job['link'],
+            'title': clean_title(job['job_name']),
+            'link': job['job_link'],
             'salary': clean_salary(job['salary']),
-            'company': job['company'],
-            'update': pendulum.instance(job['update_date']).in_timezone('Asia/Ho_Chi_Minh'),
-            'location': job['location'],
-            'deadline': job['deadline'],
+            'company': job['job_company'],
+            'update': pendulum.instance(job['posted_date']).in_timezone('Asia/Ho_Chi_Minh'),
+            'location': job['job_location'],
+            'deadline': job['remaining_time'],
             'due_date': pendulum.instance(job['due_date']).in_timezone('Asia/Ho_Chi_Minh')
         })
 
-        logging.info(f"Job '{job['title']}' has update time: {job['update_date']}")
+        logging.info(f"Job '{job['job_name']}' has update time: {job['posted_date']}")
 
     logging.info(f"Cleaned {len(cleaned_jobs)} job(s)")
 
@@ -399,13 +427,13 @@ def transform_data(**kwargs):
     transformed_jobs = []
     for job in cleaned_jobs:
         transformed_jobs.append({
-            'title': job['title'],
-            'link': job['link'],
+            'title': job['job_name'],
+            'link': job['job_link'],
             'salary': transform_salary(job['salary']),
-            'company': job['company'],
-            'update': pendulum.instance(job['update']).in_timezone('Asia/Ho_Chi_Minh'),
-            'location': job['location'],
-            'deadline': job['deadline'],
+            'company': job['company_name'],
+            'update': pendulum.instance(job['posted_date']).in_timezone('Asia/Ho_Chi_Minh'),
+            'location': job['job_location'],
+            'deadline': job['remaining_time'],
             'due_date': pendulum.instance(job['due_date']).in_timezone('Asia/Ho_Chi_Minh')
         })
 

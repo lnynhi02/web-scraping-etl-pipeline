@@ -74,14 +74,14 @@ def scrape_data(**kwargs):
 
                 update_date, due_date = caculate_dates(update, deadline)
                 scraped_jobs.append({
-                    'title': title,
-                    'link': link,
+                    'job_name': title,
+                    'job_link': link,
                     'salary': salary,
-                    'company': company,
+                    'company_name': company,
                     'update': update,
                     'update_date': update_date,
-                    'location': location,
-                    'deadline': deadline,
+                    'job_location': location,
+                    'remaining_time': deadline,
                     'due_date': due_date
                 })
             
@@ -103,7 +103,7 @@ def write_to_staging_table(scraped_jobs):
     try:
         for job in scraped_jobs:
             cur.execute("""INSERT INTO staging_table VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""", 
-            (job['title'], job['link'], job['salary'], job['company'], job['update'], job['update_date'], job['location'], job['deadline'], job['due_date']))
+            (job['job_name'], job['job_link'], job['salary'], job['company_name'], job['update'], job['update_date'], job['job_location'], job['remaining_time'], job['due_date']))
     except Exception as e:
         logging.error(f"Error writing data to staging table: {e}")
     finally:
@@ -130,17 +130,17 @@ def clean_data(**kwargs):
     cleaned_jobs = []
     for job in scraped_jobs:        
         cleaned_jobs.append({
-            'title': clean_title(job['title']),
-            'link': job['link'],
+            'job_name': clean_title(job['job_name']),
+            'job_link': job['job_link'],
             'salary': clean_salary(job['salary']),
-            'company': job['company'],
-            'update': pendulum.instance(job['update_date']).in_timezone('Asia/Ho_Chi_Minh'),
-            'location': job['location'],
-            'deadline': job['deadline'],
+            'company_name': job['company_name'],
+            'posted_date': pendulum.instance(job['posted_date']).in_timezone('Asia/Ho_Chi_Minh'),
+            'job_location': job['job_location'],
+            'remaining_time': job['remaining_time'],
             'due_date': pendulum.instance(job['due_date']).in_timezone('Asia/Ho_Chi_Minh')
         })
 
-        logging.info(f"Job '{job['title']}' has update time: {job['update_date']}")
+        logging.info(f"Job '{job['job_name']}' has update time: {job['posted_date']}")
 
     logging.info(f"Cleaned {len(cleaned_jobs)} job(s)")
 
@@ -156,13 +156,13 @@ def transform_data(**kwargs):
     transformed_jobs = []
     for job in cleaned_jobs:
         transformed_jobs.append({
-            'title': job['title'],
-            'link': job['link'],
+            'job_name': job['job_name'],
+            'job_link': job['job_link'],
             'salary': transform_salary(job['salary']),
-            'company': job['company'],
-            'update': pendulum.instance(job['update']).in_timezone('Asia/Ho_Chi_Minh'),
-            'location': job['location'],
-            'deadline': job['deadline'],
+            'company_name': job['company_name'],
+            'posted_date': pendulum.instance(job['posted_date']).in_timezone('Asia/Ho_Chi_Minh'),
+            'job_location': job['job_location'],
+            'remaining_time': job['remaining_time'],
             'due_date': pendulum.instance(job['due_date']).in_timezone('Asia/Ho_Chi_Minh')
         })
 
@@ -183,17 +183,17 @@ def write_sql_query(**kwargs):
                 for job in transformed_jobs:
                     file.write(
                         f"INSERT INTO jobs_table VALUES ("
-                        f"'{job['title']}', "
-                        f"'{job['link']}', "
+                        f"'{job['job_name']}', "
+                        f"'{job['job_link']}', "
                         f"'{job['salary']}', "
-                        f"'{job['company']}', "
-                        f"'{job['update']}', "
-                        f"'{job['location']}', "
-                        f"'{job['deadline']}', "
+                        f"'{job['company_name']}', "
+                        f"'{job['posted_date']}', "
+                        f"'{job['job_location']}', "
+                        f"'{job['remaining_time']}', "
                         f"'{job['due_date']}');\n"
                     )
-                    if job['update'] > last_processed:
-                        last_processed = job['update']
+                    if job['posted_date'] > last_processed:
+                        last_processed = job['posted_date']
 
                 logging.info(f"Wrote {len(transformed_jobs)} jobs to the SQL file")
                 write_last_processed_time(last_processed)

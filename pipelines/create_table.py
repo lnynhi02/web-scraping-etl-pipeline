@@ -50,27 +50,27 @@ def execute_sql(sql_query):
 def create_table():
     sql_query_staging_table = '''
         CREATE TABLE IF NOT EXISTS staging_table(
-            title TEXT,
-            link TEXT,
+            job_name TEXT,
+            job_link TEXT,
             salary TEXT,
-            company TEXT,
+            company_name TEXT,
             update TEXT,
             update_date TIMESTAMP WITH TIME ZONE,
-            location VARCHAR(30),
-            deadline TEXT,
+            job_location VARCHAR(30),
+            remaining_time TEXT,
             due_date TIMESTAMP WITH TIME ZONE
         )
     '''
 
     sql_query_jobs_table = '''
         CREATE TABLE IF NOT EXISTS jobs_table(
-            title TEXT,
-            link TEXT,
+            job_name TEXT,
+            job_link TEXT,
             salary TEXT,
-            company TEXT,
-            update TIMESTAMP WITH TIME ZONE,
-            location VARCHAR(30),
-            deadline TEXT,
+            company_name TEXT,
+            posted_date TIMESTAMP WITH TIME ZONE,
+            job_location VARCHAR(30),
+            remaining_time TEXT,
             due_date TIMESTAMP WITH TIME ZONE
         )
     '''
