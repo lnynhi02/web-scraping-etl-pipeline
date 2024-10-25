@@ -285,6 +285,64 @@ $$;
 - To gain better insights into the data, let's execute some queries.
 
 ## 📝 Technical Notes
+
+- **Error Handling:** The `check_sql_file` task verifies whether the `postgres_query.sql` file contains any `INSERT` commands. If `INSERT` commands are present, it proceeds to execute the downstream tasks. Conversely, if no commands are found, it raises an `AirflowSkipException`, causing both the current task and its downstream tasks to be skipped.
+```python
+def write_sql_query(**kwargs):
+    transformed_jobs = kwargs['ti'].xcom_pull(key='transformed_data', task_ids='transform_data_task')
+    postgres_sql_file = os.path.join(os.path.dirname(__file__), '..', 'tmp', 'postgres_query.sql')
+
+    try:
+        with open(postgres_sql_file, "w") as file:
+            if not transformed_jobs:
+                logging.info("There are no available jobs to write")
+            else:
+                last_processed = transformed_jobs[0]['update']
+                for job in transformed_jobs:
+                    file.write(
+                        f"INSERT INTO jobs_table VALUES ("
+                        f"'{job['title']}', "
+                        f"'{job['link']}', "
+                        f"'{job['salary']}', "
+                        f"'{job['company']}', "
+                        f"'{job['update']}', "
+                        f"'{job['location']}', "
+                        f"'{job['deadline']}', "
+                        f"'{job['due_date']}');\n"
+                    )
+                    if job['update'] > last_processed:
+                        last_processed = job['update']
+
+                logging.info(f"Wrote {len(transformed_jobs)} jobs to the SQL file")
+                write_last_processed_time(last_processed)
+                logging.info("Successfully update the last processed time")
+    except Exception as e: 
+        logging.error(f"Error writing SQL query to file{e}")
+
+def check_sql_file(**kwargs):
+    postgres_sql_file = os.path.join(os.path.dirname(__file__), '..', 'tmp', 'postgres_query.sql')
+
+    if os.path.exists(postgres_sql_file) and os.path.getsize(postgres_sql_file) > 0:
+        logging.info("SQL file is not empty. Start to write to Postgres database")
+    else:
+        logging.info("No SQL queries to execute.")
+        raise AirflowSkipException("Skipping task because SQL file is empty")
+```
+```python
+check_sql_file_task = PythonOperator(
+    task_id='check_sql_file_task',
+    python_callable=check_sql_file,
+    provide_context=True
+)
+
+write_to_postgres_task = PostgresOperator(
+    task_id='write_to_postgres_task',
+    postgres_conn_id='postgres_conn',
+    sql='postgres_query.sql',
+    trigger_rule='all_success'
+)
+```
+
 - **Using Playwright:** Initially, I initially intended to use **BeautifulSoup** and **Requests** for web scraping, but due to website restrictions, I switched to **Playwright** for better automation. I tried running it with **headless=True**, but it did not work as expected, so I set it to **headless=False**, which required installing **pyvirtualdisplay**. This installation is included in the Dockerfile.
 
 - **Write to Staging Table:** In the `write_to_staging_table` function, data is written to a staging table to preserve the original dataset before any cleaning processes are applied. This allows for data recovery if needed and ensures that no data is lost during processing.
@@ -354,61 +412,4 @@ def transform_data(**kwargs):
     logging.info(f"Transformed {len(transformed_jobs)} job(s)")
 
     kwargs['ti'].xcom_push(key='transformed_data', value=transformed_jobs)
-```
-
-- **Error Handling:** The `check_sql_file` task verifies whether the `postgres_query.sql` file contains any `INSERT` commands. If `INSERT` commands are present, it proceeds to execute the downstream tasks. Conversely, if no commands are found, it raises an `AirflowSkipException`, causing both the current task and its downstream tasks to be skipped.
-```python
-def write_sql_query(**kwargs):
-    transformed_jobs = kwargs['ti'].xcom_pull(key='transformed_data', task_ids='transform_data_task')
-    postgres_sql_file = os.path.join(os.path.dirname(__file__), '..', 'tmp', 'postgres_query.sql')
-
-    try:
-        with open(postgres_sql_file, "w") as file:
-            if not transformed_jobs:
-                logging.info("There are no available jobs to write")
-            else:
-                last_processed = transformed_jobs[0]['update']
-                for job in transformed_jobs:
-                    file.write(
-                        f"INSERT INTO jobs_table VALUES ("
-                        f"'{job['title']}', "
-                        f"'{job['link']}', "
-                        f"'{job['salary']}', "
-                        f"'{job['company']}', "
-                        f"'{job['update']}', "
-                        f"'{job['location']}', "
-                        f"'{job['deadline']}', "
-                        f"'{job['due_date']}');\n"
-                    )
-                    if job['update'] > last_processed:
-                        last_processed = job['update']
-
-                logging.info(f"Wrote {len(transformed_jobs)} jobs to the SQL file")
-                write_last_processed_time(last_processed)
-                logging.info("Successfully update the last processed time")
-    except Exception as e: 
-        logging.error(f"Error writing SQL query to file{e}")
-
-def check_sql_file(**kwargs):
-    postgres_sql_file = os.path.join(os.path.dirname(__file__), '..', 'tmp', 'postgres_query.sql')
-
-    if os.path.exists(postgres_sql_file) and os.path.getsize(postgres_sql_file) > 0:
-        logging.info("SQL file is not empty. Start to write to Postgres database")
-    else:
-        logging.info("No SQL queries to execute.")
-        raise AirflowSkipException("Skipping task because SQL file is empty")
-```
-```python
-check_sql_file_task = PythonOperator(
-    task_id='check_sql_file_task',
-    python_callable=check_sql_file,
-    provide_context=True
-)
-
-write_to_postgres_task = PostgresOperator(
-    task_id='write_to_postgres_task',
-    postgres_conn_id='postgres_conn',
-    sql='postgres_query.sql',
-    trigger_rule='all_success'
-)
 ```
