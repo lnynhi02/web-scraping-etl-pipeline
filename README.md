@@ -198,32 +198,32 @@ Now, we just need to run Airflow in Docker. However, we need to create some envi
 
 - Now we can access the Airflow UI at ``localhost:8080``. Use the username ``airflow`` and the password ``airflow`` to log in.
 <p align="center">
-  <img width=80% height=80%" src="assets/1.png">
+  <img width=80% height=80%" src="assets/-1.png">
 
 - We can see the dag `job_scraper`. 
 <p align="center">
-  <img width=80% height=80%" src="assets/2.png">
+  <img width=80% height=80%" src="assets/-2.png">
 
 - Before running the DAG, we need to establish a ***Postgres Connection*** in Airflow to enable connectivity with the Postgres database. This connection is essential for executing the `write_to_postgres_task` using the `PostgresOperator`.
 
 - Navigate to the **Admin** section at the top and select **Connections**. Then, click on the **+** icon to add a new connection.
 <p align="center">
-  <img width=80% height=80%" src="assets/5.png">
+  <img width=80% height=80%" src="assets/-5.png">
 
 - Since we are connecting from Airflow running in a Docker container, set the host to **host.docker.internal**. Ensure you also enter your **database** name and **password** accordingly. The **Connection ID** will later be utilized in the **postgres_conn_id** parameter within the `write_to_postgres_task`
 <p align="center">
-  <img width=80% height=80%" src="assets/6.png">
+  <img width=80% height=80%" src="assets/-6.png">
 
 - Let's go and run the DAG.
 <p align="center">
-  <img width=80% height=80%" src="assets/4.png">
+  <img width=80% height=80%" src="assets/-4.png">
 
 - You can monitor the log for each task to gain insights into the scraping process and see how many jobs have been collected. 
 <p align="center">
-  <img width=80% height=80%" src="assets/7.png">
+  <img width=80% height=80%" src="assets/-7.png">
 
 <p align="center">
-  <img width=80% height=80%" src="assets/10.png">
+  <img width=80% height=80%" src="assets/-10.png">
 
 > [!NOTE]
 > For further details about its operation, please refer to the [Technical Notes](#-technical-notes).
