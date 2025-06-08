@@ -6,7 +6,7 @@ import logging
 import sys
 import os
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'pipelines'))
 from topcv_pipeline import scrape_data, clean_data, transform_data, write_sql_query, check_sql_file
 
 logging.basicConfig(level=logging.INFO)
