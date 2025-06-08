@@ -20,7 +20,7 @@ x-airflow-common:
     - ./airflow/dags:/opt/airflow/dags
     - ./airflow/logs:/opt/airflow/logs
     - ./tmp:/opt/airflow/tmp
-    - ./pipelines:/opt/airflow/pipelines
+    - ./src:/opt/airflow/pipelines
     - ./config/config.ini:/opt/airflow/config.ini
   user: "${AIRFLOW_UID:-50000}:0"
   networks:
